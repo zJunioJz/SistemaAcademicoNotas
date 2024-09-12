@@ -1,0 +1,6 @@
+# Ambiente virtual
+/env/
+
+# Arquivos de configuração
+*.pyc
+__pycache__/
