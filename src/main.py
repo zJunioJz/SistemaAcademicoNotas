@@ -115,7 +115,6 @@ def atualizar_nota(cursor, conn):
         curso = input("Digite o curso do Aluno: ")
         data_nascimento = input("Digite a data de nascimento do Aluno (DD/MM/YYYY): ")
         
-        
         cursor.execute('''
         INSERT INTO alunos (matricula, nome, curso, data_nascimento, av1, av2)
         VALUES (?, ?, ?, ?, ?, ?)
