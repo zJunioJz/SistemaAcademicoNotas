@@ -54,15 +54,48 @@ def atualizar_aluno(cursor, conn):
     print("Opção 3 selecionada")
     
 
+# Função para excluir alunos
 def excluir_aluno(cursor, conn):
-    print("Opção 4 selecionada")
+    print("Opção 4 selecionada\n")
     
+    matricula = input("Digite a matrícula do aluno a ser excluído: ")
     
+    cursor.execute('SELECT * FROM alunos WHERE matricula = ?', (matricula,))
+    aluno = cursor.fetchone()
+    
+    if aluno:
+        print(f"Confirma exclusão do aluno:\nMatrícula: {aluno[0]}\nNome: {aluno[1]}\nCurso: {aluno[2]}")
+        confirmacao = input("Digite 'S' para confirmar, ou qualquer outra tecla para cancelar: ").upper()
+        
+        if confirmacao == 'S':
+            cursor.execute('DELETE FROM alunos WHERE matricula = ?', (matricula,))
+            conn.commit()
+            print(f"\nAluno com matrícula {matricula} excluído com sucesso.\n")
+        else:
+            print("\nOperação cancelada.\n")
+    else:
+        print("\nAluno não encontrado.\n")
+    
+    print("-------------------------------------------------------------") 
+    
+# Função para listar alunos  
 def listar_todos_alunos(cursor, conn):
-    print("Opção 5 selecionada")
+    print("Opção 5 selecionada\n")
     
-
-   
+    cursor.execute('SELECT * FROM alunos')
+    alunos = cursor.fetchall()
+    
+    if alunos:
+        print("Lista de Alunos Cadastrados:\n")
+        for aluno in alunos:
+            print(f"Matrícula: {aluno[0]}, Nome: {aluno[1]}, Curso: {aluno[2]}, Data de Nascimento: {aluno[3]}")
+            if aluno[4] is not None and aluno[5] is not None:
+                print(f"Nota Av1: {aluno[4]}, Nota Av2: {aluno[5]}")
+            print("-------------------------------------------------------------")
+    else:
+        print("Nenhum aluno cadastrado.\n")
+    
+    
 def atualizar_nota(cursor, conn):
     print("Opção 6 selecionada\n")
     
