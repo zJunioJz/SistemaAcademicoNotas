@@ -10,6 +10,7 @@ def inicializar_banco():
         matricula INTEGER PRIMARY KEY,
         nome TEXT NOT NULL,
         curso TEXT NOT NULL,
+        data_nascimento TEXT NOT NULL,
         av1 REAL CHECK (av1 >= 0 AND av1 <= 10),  -- Nota da Avaliação 1
         av2 REAL CHECK (av2 >= 0 AND av2 <= 10)   -- Nota da Avaliação 2
     )
@@ -24,15 +25,14 @@ def cadastrar_aluno(cursor, conn):
     matricula = input("Digite a Matricula do Aluno: ")
     nome = input("Digite o nome do Aluno: ")
     curso = input("Digite o curso do Aluno: ")
-    av1 = float(input("Digite a nota da Av1: "))
-    av2 = float(input("Digite a nota da Av2: "))
+    data_nascimento = input("Digite a data de nascimento do Aluno (DD/MM/YYYY): ")
     print("\nAluno Cadastrado com Sucesso!\n")
     print("-------------------------------------------------------------")
     
     cursor.execute('''
-    INSERT INTO alunos (matricula, nome, curso, av1, av2)
-    VALUES (?, ?, ?, ?, ?)
-    ''', (matricula, nome, curso, av1, av2))
+    INSERT INTO alunos (matricula, nome, curso, data_nascimento)
+    VALUES (?, ?, ?, ?)
+    ''', (matricula, nome, curso, data_nascimento))
     
     conn.commit()
 
@@ -44,7 +44,7 @@ def consultar_aluno(cursor, conn):
     aluno = cursor.fetchone()
     
     if aluno:
-        print(f"Dados do Aluno:\nMatrícula: {aluno[0]}\nNome: {aluno[1]}\nCurso: {aluno[2]}\nAv1: {aluno[3]}\nAv2: {aluno[4]}")
+        print(f"\nDados do Aluno:\nMatrícula: {aluno[0]}\nNome: {aluno[1]}\nCurso: {aluno[2]}\nData de Nascimento: {aluno[3]}")
     else:
         print("Aluno não encontrado.")
     print("-------------------------------------------------------------")
@@ -60,10 +60,43 @@ def excluir_aluno(cursor, conn):
     
 def listar_todos_alunos(cursor, conn):
     print("Opção 5 selecionada")
-   
     
-def ver_nota_aluno(cursor, conn):
+
+   
+def atualizar_nota(cursor, conn):
     print("Opção 6 selecionada\n")
+    
+    matricula = input("Digite a matrícula do aluno: ")
+    av1 = float(input("Digite a nova nota da Av1: "))
+    av2 = float(input("Digite a nova nota da Av2: "))
+    
+    cursor.execute('''
+    UPDATE alunos
+    SET av1 = ?, av2 = ?
+    WHERE matricula = ?
+    ''', (av1, av2, matricula))
+    
+    if cursor.rowcount == 0:
+        print("\nAluno não encontrado. Cadastrando novo aluno...")
+        nome = input("\nDigite o nome do Aluno: ")
+        curso = input("Digite o curso do Aluno: ")
+        data_nascimento = input("Digite a data de nascimento do Aluno (DD/MM/YYYY): ")
+        
+        
+        cursor.execute('''
+        INSERT INTO alunos (matricula, nome, curso, data_nascimento, av1, av2)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ''', (matricula, nome, curso, data_nascimento, av1, av2))
+        print("\nAluno cadastrado com sucesso!")
+    else:
+        print("\nNotas atualizadas com sucesso!")
+    
+    conn.commit()
+    print("-------------------------------------------------------------")
+
+
+def ver_nota_aluno(cursor, conn):
+    print("Opção 7 selecionada\n")
     matricula = input("Digite a matrícula do aluno: ")
     cursor.execute('SELECT nome, curso, av1, av2 FROM alunos WHERE matricula = ?', (matricula,))
     result = cursor.fetchone()
@@ -84,7 +117,7 @@ def ver_nota_aluno(cursor, conn):
         print("-------------------------------------------------------------")
             
 
-def opcao_7(cursor, conn):
+def opcao_8(cursor, conn):
     print("Saindo do sistema...")
     conn.close()  # Fechar a conexão ao sair
     exit() # Encerrar o programa
@@ -95,8 +128,9 @@ opcoes = {
     '3': atualizar_aluno,
     '4': excluir_aluno,
     '5': listar_todos_alunos,
-    '6': ver_nota_aluno,
-    '7': opcao_7,
+    '6': atualizar_nota,
+    '7': ver_nota_aluno,
+    '8': opcao_8,
 }
 
 def main():
@@ -109,12 +143,13 @@ def main():
         print("3. Atualizar dados do Aluno(a)")
         print("4. Excluir Aluno(a)")
         print("5. Listar todos os Aluno(a)")
-        print("6. Ver Nota de um Aluno(a)")
-        print("7. Sair")
+        print("6. Adicionar ou Atualizar a Nota de um Aluno(a)")
+        print("7. Ver Nota de um Aluno(a)")
+        print("8. Sair")
         opcao = input("\nEscolha uma Opção: ")
         
         if opcao in opcoes:
-            if opcao == '7':
+            if opcao == '8':
                 opcoes[opcao](cursor, conn)
                 break  # Termina o loop principal após a opção 'Sair'
             else:
