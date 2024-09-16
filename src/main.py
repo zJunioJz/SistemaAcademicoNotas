@@ -95,7 +95,6 @@ def listar_todos_alunos(cursor, conn):
     else:
         print("Nenhum aluno cadastrado.\n")
     
-    
 def atualizar_nota(cursor, conn):
     print("Opção 6 selecionada\n")
     
@@ -115,7 +114,7 @@ def atualizar_nota(cursor, conn):
         curso = input("Digite o curso do Aluno: ")
         data_nascimento = input("Digite a data de nascimento do Aluno (DD/MM/YYYY): ")
          
-         
+
         cursor.execute('''
         INSERT INTO alunos (matricula, nome, curso, data_nascimento, av1, av2)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -126,7 +125,6 @@ def atualizar_nota(cursor, conn):
     
     conn.commit()
     print("-------------------------------------------------------------")
-
 
 def ver_nota_aluno(cursor, conn):
     print("Opção 7 selecionada\n")
