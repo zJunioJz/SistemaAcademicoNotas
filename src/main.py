@@ -37,7 +37,17 @@ def cadastrar_aluno(cursor, conn):
     conn.commit()
 
 def consultar_aluno(cursor, conn):
-    print("Opção 2 selecionada")
+    print("Opção 2 selecionada\n")
+    matricula = input("Digite a matrícula do aluno: ")
+    
+    cursor.execute('SELECT * FROM alunos WHERE matricula = ?', (matricula,))
+    aluno = cursor.fetchone()
+    
+    if aluno:
+        print(f"Dados do Aluno:\nMatrícula: {aluno[0]}\nNome: {aluno[1]}\nCurso: {aluno[2]}\nAv1: {aluno[3]}\nAv2: {aluno[4]}")
+    else:
+        print("Aluno não encontrado.")
+    print("-------------------------------------------------------------")
    
 
 def atualizar_aluno(cursor, conn):
