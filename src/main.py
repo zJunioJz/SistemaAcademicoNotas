@@ -49,10 +49,34 @@ def consultar_aluno(cursor, conn):
         print("Aluno não encontrado.")
     print("-------------------------------------------------------------")
    
-
 def atualizar_aluno(cursor, conn):
     print("Opção 3 selecionada")
+   
+    matricula = input("Digite a matrícula do aluno a ser atualizada: ")
+   
+    cursor.execute('SELECT * FROM alunos WHERE matricula = ?', (matricula,))
+    aluno = cursor.fetchone()
+   
+    if aluno:
+        print(f"Dados atuais do aluno:\nMatrícula: {aluno[0]}\nNome: {aluno[1]}\nCurso: {aluno[2]}\nData de Nascimento: {aluno[3]}")
+        print("\nDeixe em branco para manter o valor atual.")
+        
+        novo_nome = input(f"Novo nome [{aluno[1]}]: ") or aluno[1]
+        novo_curso = input(f"Novo curso [{aluno[2]}]: ") or aluno[2]
+        nova_data_nascimento = input(f"Nova data de nascimento (DD/MM/YYYY) [{aluno[3]}]: ") or aluno[3]
+       
+        cursor.execute('''
+        UPDATE alunos
+        SET nome = ?, curso = ?, data_nascimento = ?
+        WHERE matricula = ?
+        ''', (novo_nome, novo_curso, nova_data_nascimento, matricula))
+       
+        conn.commit()
+        print("\nDados do aluno atualizados com sucesso!\n")
+    else:
+        print("\nAluno não encontrado.\n")
     
+    print("-------------------------------------------------------------")
 
 # Função para excluir alunos
 def excluir_aluno(cursor, conn):
@@ -95,7 +119,6 @@ def listar_todos_alunos(cursor, conn):
     else:
         print("Nenhum aluno cadastrado.\n")
     
-    
 def atualizar_nota(cursor, conn):
     print("Opção 6 selecionada\n")
     
@@ -114,8 +137,8 @@ def atualizar_nota(cursor, conn):
         nome = input("\nDigite o nome do Aluno: ")
         curso = input("Digite o curso do Aluno: ")
         data_nascimento = input("Digite a data de nascimento do Aluno (DD/MM/YYYY): ")
-        
-        
+         
+
         cursor.execute('''
         INSERT INTO alunos (matricula, nome, curso, data_nascimento, av1, av2)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -126,7 +149,6 @@ def atualizar_nota(cursor, conn):
     
     conn.commit()
     print("-------------------------------------------------------------")
-
 
 def ver_nota_aluno(cursor, conn):
     print("Opção 7 selecionada\n")
