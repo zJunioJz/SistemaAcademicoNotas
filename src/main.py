@@ -49,10 +49,34 @@ def consultar_aluno(cursor, conn):
         print("Aluno não encontrado.")
     print("-------------------------------------------------------------")
    
-
 def atualizar_aluno(cursor, conn):
     print("Opção 3 selecionada")
+   
+    matricula = input("Digite a matrícula do aluno a ser atualizada: ")
+   
+    cursor.execute('SELECT * FROM alunos WHERE matricula = ?', (matricula,))
+    aluno = cursor.fetchone()
+   
+    if aluno:
+        print(f"Dados atuais do aluno:\nMatrícula: {aluno[0]}\nNome: {aluno[1]}\nCurso: {aluno[2]}\nData de Nascimento: {aluno[3]}")
+        print("\nDeixe em branco para manter o valor atual.")
+        
+        novo_nome = input(f"Novo nome [{aluno[1]}]: ") or aluno[1]
+        novo_curso = input(f"Novo curso [{aluno[2]}]: ") or aluno[2]
+        nova_data_nascimento = input(f"Nova data de nascimento (DD/MM/YYYY) [{aluno[3]}]: ") or aluno[3]
+       
+        cursor.execute('''
+        UPDATE alunos
+        SET nome = ?, curso = ?, data_nascimento = ?
+        WHERE matricula = ?
+        ''', (novo_nome, novo_curso, nova_data_nascimento, matricula))
+       
+        conn.commit()
+        print("\nDados do aluno atualizados com sucesso!\n")
+    else:
+        print("\nAluno não encontrado.\n")
     
+    print("-------------------------------------------------------------")
 
 # Função para excluir alunos
 def excluir_aluno(cursor, conn):
