@@ -1,11 +1,11 @@
 import sqlite3
 
-# Função para conectar ao banco e criar a tabela
 def inicializar_banco():
+    # Conecta ao banco de dados 'dados_aluno.db' e cria a tabela 'alunos' se não existir.
     conn = sqlite3.connect('dados_aluno.db')
     cursor = conn.cursor()
     
-    cursor.execute('''
+    cursor.execute(''' 
     CREATE TABLE IF NOT EXISTS alunos (
         matricula INTEGER PRIMARY KEY,
         nome TEXT NOT NULL,
@@ -19,91 +19,112 @@ def inicializar_banco():
     conn.commit()
     return conn, cursor
 
-# Funções para cadastrar Alunos
+def validar_matricula(cursor, matricula):
+    # Verifica se a matrícula é um número inteiro e se existe no banco de dados.
+    if not matricula.isdigit():
+        print("A matrícula deve ser um número inteiro.")
+        return False
+
+    cursor.execute('SELECT * FROM alunos WHERE matricula = ?', (matricula,))
+    if cursor.fetchone():
+        return True
+
+    print("Matrícula não encontrada.")
+    return False
+
 def cadastrar_aluno(cursor, conn):
+    # Função para cadastrar um novo aluno no banco de dados.
     print("Opção 1 selecionada\n")
     matricula = input("Digite a Matricula do Aluno: ")
-    nome = input("Digite o nome do Aluno: ")
-    curso = input("Digite o curso do Aluno: ")
-    data_nascimento = input("Digite a data de nascimento do Aluno (DD/MM/YYYY): ")
-    print("\nAluno Cadastrado com Sucesso!\n")
+
+    if not validar_matricula(cursor, matricula):
+        # Solicita os dados do aluno se a matrícula não estiver cadastrada.
+        nome = input("Digite o nome do Aluno: ")
+        curso = input("Digite o curso do Aluno: ")
+        data_nascimento = input("Digite a data de nascimento do Aluno (DD/MM/YYYY): ")
+        
+        cursor.execute(''' 
+        INSERT INTO alunos (matricula, nome, curso, data_nascimento)
+        VALUES (?, ?, ?, ?)
+        ''', (matricula, nome, curso, data_nascimento))
+        
+        conn.commit()
+        print("\nAluno Cadastrado com Sucesso!\n")
+    else:
+        print("A matrícula já está cadastrada.")
+
     print("-------------------------------------------------------------")
-    
-    cursor.execute('''
-    INSERT INTO alunos (matricula, nome, curso, data_nascimento)
-    VALUES (?, ?, ?, ?)
-    ''', (matricula, nome, curso, data_nascimento))
-    
-    conn.commit()
 
 def consultar_aluno(cursor, conn):
+    # Função para consultar os dados de um aluno.
     print("Opção 2 selecionada\n")
     matricula = input("Digite a matrícula do aluno: ")
     
-    cursor.execute('SELECT * FROM alunos WHERE matricula = ?', (matricula,))
-    aluno = cursor.fetchone()
-    
-    if aluno:
-        print(f"\nDados do Aluno:\nMatrícula: {aluno[0]}\nNome: {aluno[1]}\nCurso: {aluno[2]}\nData de Nascimento: {aluno[3]}")
-    else:
-        print("Aluno não encontrado.")
-    print("-------------------------------------------------------------")
-   
-def atualizar_aluno(cursor, conn):
-    print("Opção 3 selecionada")
-   
-    matricula = input("Digite a matrícula do aluno a ser atualizada: ")
-   
-    cursor.execute('SELECT * FROM alunos WHERE matricula = ?', (matricula,))
-    aluno = cursor.fetchone()
-   
-    if aluno:
-        print(f"Dados atuais do aluno:\nMatrícula: {aluno[0]}\nNome: {aluno[1]}\nCurso: {aluno[2]}\nData de Nascimento: {aluno[3]}")
-        print("\nDeixe em branco para manter o valor atual.")
+    if validar_matricula(cursor, matricula):
+        cursor.execute('SELECT * FROM alunos WHERE matricula = ?', (matricula,))
+        aluno = cursor.fetchone()
         
-        novo_nome = input(f"Novo nome [{aluno[1]}]: ") or aluno[1]
-        novo_curso = input(f"Novo curso [{aluno[2]}]: ") or aluno[2]
-        nova_data_nascimento = input(f"Nova data de nascimento (DD/MM/YYYY) [{aluno[3]}]: ") or aluno[3]
-       
-        cursor.execute('''
-        UPDATE alunos
-        SET nome = ?, curso = ?, data_nascimento = ?
-        WHERE matricula = ?
-        ''', (novo_nome, novo_curso, nova_data_nascimento, matricula))
-       
-        conn.commit()
-        print("\nDados do aluno atualizados com sucesso!\n")
-    else:
-        print("\nAluno não encontrado.\n")
-    
+        if aluno:
+            print(f"\nDados do Aluno:\nMatrícula: {aluno[0]}\nNome: {aluno[1]}\nCurso: {aluno[2]}\nData de Nascimento: {aluno[3]}")
+        else:
+            print("Aluno não encontrado.")
     print("-------------------------------------------------------------")
 
-# Função para excluir alunos
+def atualizar_aluno(cursor, conn):
+    # Função para atualizar os dados de um aluno existente.
+    print("Opção 3 selecionada")
+    matricula = input("Digite a matrícula do aluno a ser atualizada: ")
+
+    if validar_matricula(cursor, matricula):
+        cursor.execute('SELECT * FROM alunos WHERE matricula = ?', (matricula,))
+        aluno = cursor.fetchone()
+        
+        if aluno:
+            print(f"Dados atuais do aluno:\nMatrícula: {aluno[0]}\nNome: {aluno[1]}\nCurso: {aluno[2]}\nData de Nascimento: {aluno[3]}")
+            print("\nDeixe em branco para manter o valor atual.")
+            
+            novo_nome = input(f"Novo nome [{aluno[1]}]: ") or aluno[1]
+            novo_curso = input(f"Novo curso [{aluno[2]}]: ") or aluno[2]
+            nova_data_nascimento = input(f"Nova data de nascimento (DD/MM/YYYY) [{aluno[3]}]: ") or aluno[3]
+           
+            cursor.execute(''' 
+            UPDATE alunos
+            SET nome = ?, curso = ?, data_nascimento = ?
+            WHERE matricula = ?
+            ''', (novo_nome, novo_curso, nova_data_nascimento, matricula))
+           
+            conn.commit()
+            print("\nDados do aluno atualizados com sucesso!\n")
+        else:
+            print("\nAluno não encontrado.\n")
+    print("-------------------------------------------------------------")
+
 def excluir_aluno(cursor, conn):
+    # Função para excluir um aluno do banco de dados.
     print("Opção 4 selecionada\n")
     
     matricula = input("Digite a matrícula do aluno a ser excluído: ")
-    
-    cursor.execute('SELECT * FROM alunos WHERE matricula = ?', (matricula,))
-    aluno = cursor.fetchone()
-    
-    if aluno:
-        print(f"Confirma exclusão do aluno:\nMatrícula: {aluno[0]}\nNome: {aluno[1]}\nCurso: {aluno[2]}")
-        confirmacao = input("Digite 'S' para confirmar, ou qualquer outra tecla para cancelar: ").upper()
+
+    if validar_matricula(cursor, matricula):
+        cursor.execute('SELECT * FROM alunos WHERE matricula = ?', (matricula,))
+        aluno = cursor.fetchone()
         
-        if confirmacao == 'S':
-            cursor.execute('DELETE FROM alunos WHERE matricula = ?', (matricula,))
-            conn.commit()
-            print(f"\nAluno com matrícula {matricula} excluído com sucesso.\n")
+        if aluno:
+            print(f"Confirma exclusão do aluno:\nMatrícula: {aluno[0]}\nNome: {aluno[1]}\nCurso: {aluno[2]}")
+            confirmacao = input("Digite 'S' para confirmar, ou qualquer outra tecla para cancelar: ").upper()
+            
+            if confirmacao == 'S':
+                cursor.execute('DELETE FROM alunos WHERE matricula = ?', (matricula,))
+                conn.commit()
+                print(f"\nAluno com matrícula {matricula} excluído com sucesso.\n")
+            else:
+                print("\nOperação cancelada.\n")
         else:
-            print("\nOperação cancelada.\n")
-    else:
-        print("\nAluno não encontrado.\n")
-    
+            print("\nAluno não encontrado.\n")
     print("-------------------------------------------------------------") 
-    
-# Função para listar alunos  
+
 def listar_todos_alunos(cursor, conn):
+    # Função para listar todos os alunos cadastrados.
     print("Opção 5 selecionada\n")
     
     cursor.execute('SELECT * FROM alunos')
@@ -118,64 +139,59 @@ def listar_todos_alunos(cursor, conn):
             print("-------------------------------------------------------------")
     else:
         print("Nenhum aluno cadastrado.\n")
-    
-def atualizar_nota(cursor, conn):
-    print("Opção 6 selecionada\n")
-    
-    matricula = input("Digite a matrícula do aluno: ")
-    av1 = float(input("Digite a nova nota da Av1: "))
-    av2 = float(input("Digite a nova nota da Av2: "))
-    
-    cursor.execute('''
-    UPDATE alunos
-    SET av1 = ?, av2 = ?
-    WHERE matricula = ?
-    ''', (av1, av2, matricula))
-    
-    if cursor.rowcount == 0:
-        print("\nAluno não encontrado. Cadastrando novo aluno...")
-        nome = input("\nDigite o nome do Aluno: ")
-        curso = input("Digite o curso do Aluno: ")
-        data_nascimento = input("Digite a data de nascimento do Aluno (DD/MM/YYYY): ")
-         
 
-        cursor.execute('''
-        INSERT INTO alunos (matricula, nome, curso, data_nascimento, av1, av2)
-        VALUES (?, ?, ?, ?, ?, ?)
-        ''', (matricula, nome, curso, data_nascimento, av1, av2))
-        print("\nAluno cadastrado com sucesso!")
-    else:
-        print("\nNotas atualizadas com sucesso!")
-    
-    conn.commit()
-    print("-------------------------------------------------------------")
+def menu_nota(cursor, conn):
+    # Menu para gerenciar notas dos alunos.
+    while True:
+        print("Opção 6 selecionada\n")
+        print("1. Adicionar/Atualizar notas")
+        print("2. Ver notas do aluno")
+        print("3. Voltar ao menu principal")
 
-def ver_nota_aluno(cursor, conn):
-    print("Opção 7 selecionada\n")
-    matricula = input("Digite a matrícula do aluno: ")
-    cursor.execute('SELECT nome, curso, av1, av2 FROM alunos WHERE matricula = ?', (matricula,))
-    result = cursor.fetchone()
-    
-    if result:
-        nome, curso, av1, av2 = result
-        
-        media = (av1 + av2) / 2
-        
-        print(f"O Aluno(a): {nome}")
-        print(f"Curso: {curso}")
-        print(f"Obteve na Av1: {av1}")
-        print(f"Obteve na Av2: {av2}")
-        print(f"O Aluno(a) obteve uma média final de {media:.2f} nas avaliações.\n")
+        opcao = input("\nEscolha uma opção: ")
+
+        if opcao == '1':
+            matricula = input("Digite a matrícula do aluno: ")
+            if validar_matricula(cursor, matricula):
+                av1 = float(input("Digite a nova nota da Av1: "))
+                av2 = float(input("Digite a nova nota da Av2: "))
+
+                cursor.execute('''UPDATE alunos SET av1 = ?, av2 = ? WHERE matricula = ?''', (av1, av2, matricula))
+                conn.commit()
+                print("\nNotas atualizadas com sucesso!")
+            else:
+                print("\nAluno não encontrado. Não é possível atualizar as notas.")
+
+        elif opcao == '2':
+            matricula = input("Digite a matrícula do aluno: ")
+            if validar_matricula(cursor, matricula):
+                cursor.execute('SELECT nome, curso, av1, av2 FROM alunos WHERE matricula = ?', (matricula,))
+                result = cursor.fetchone()
+                
+                if result:
+                    nome, curso, av1, av2 = result
+                    media = (av1 + av2) / 2 if av1 is not None and av2 is not None else 0
+                    print(f"O Aluno(a): {nome}")
+                    print(f"Curso: {curso}")
+                    print(f"Obteve na Av1: {av1}")
+                    print(f"Obteve na Av2: {av2}")
+                    print(f"O Aluno(a) obteve uma média final de {media:.2f} nas avaliações.\n")
+                else:
+                    print("Aluno não encontrado.\n")
+
+        elif opcao == '3':
+            break  # Sai do loop e volta ao menu principal
+
+        else:
+            print("Opção inválida. Tente novamente.")
+
         print("-------------------------------------------------------------")
-    else:
-        print("Aluno não encontrado.\n")
-        print("-------------------------------------------------------------")
-            
 
-def opcao_8(cursor, conn):
+def opcao_7(cursor, conn):
+    # Função para sair do sistema.
     print("Saindo do sistema...")
     conn.close()  # Fechar a conexão ao sair
-    exit() # Encerrar o programa
+    exit()  # Encerrar o programa
     
 opcoes = {
     '1': cadastrar_aluno,
@@ -183,12 +199,12 @@ opcoes = {
     '3': atualizar_aluno,
     '4': excluir_aluno,
     '5': listar_todos_alunos,
-    '6': atualizar_nota,
-    '7': ver_nota_aluno,
-    '8': opcao_8,
+    '6': menu_nota,
+    '7': opcao_7,
 }
 
 def main():
+    # Função principal que inicializa o banco e exibe o menu do sistema.
     conn, cursor = inicializar_banco()
     
     while True:
@@ -198,22 +214,16 @@ def main():
         print("3. Atualizar dados do Aluno(a)")
         print("4. Excluir Aluno(a)")
         print("5. Listar todos os Aluno(a)")
-        print("6. Adicionar ou Atualizar a Nota de um Aluno(a)")
-        print("7. Ver Nota de um Aluno(a)")
-        print("8. Sair")
-        opcao = input("\nEscolha uma Opção: ")
+        print("6. Menu: Notas")
+        print("7. Sair")
+        
+        opcao = input("\nEscolha uma opção: ")
         
         if opcao in opcoes:
-            if opcao == '8':
-                opcoes[opcao](cursor, conn)
-                break  # Termina o loop principal após a opção 'Sair'
-            else:
-                opcoes[opcao](cursor, conn)
+            opcoes[opcao](cursor, conn)  # Chama a função correspondente da opção escolhida
         else:
-            print("Opção inválida")
-        
-    # Fechar a conexão após sair do loop
-    conn.close()
+            print("Opção inválida. Tente novamente.")
 
-if __name__ == '__main__':
+# Executa a função principal
+if __name__ == "__main__":
     main()
