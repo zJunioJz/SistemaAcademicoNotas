@@ -1,3 +1,4 @@
+from datetime import datetime
 import sqlite3
 
 def inicializar_banco():
@@ -19,6 +20,7 @@ def inicializar_banco():
     conn.commit()
     return conn, cursor
 
+
 def validar_matricula(cursor, matricula):
     # Verifica se a matrícula é um número inteiro e se existe no banco de dados.
     if not matricula.isdigit():
@@ -28,32 +30,74 @@ def validar_matricula(cursor, matricula):
     cursor.execute('SELECT * FROM alunos WHERE matricula = ?', (matricula,))
     if cursor.fetchone():
         return True
-
-    print("Matrícula não encontrada.")
+    
     return False
 
-def cadastrar_aluno(cursor, conn):
-    # Função para cadastrar um novo aluno no banco de dados.
-    print("Opção 1 selecionada\n")
-    matricula = input("Digite a Matricula do Aluno: ")
 
-    if not validar_matricula(cursor, matricula):
-        # Solicita os dados do aluno se a matrícula não estiver cadastrada.
-        nome = input("Digite o nome do Aluno: ")
-        curso = input("Digite o curso do Aluno: ")
-        data_nascimento = input("Digite a data de nascimento do Aluno (DD/MM/YYYY): ")
+def validar_data(data):
+    # Valida se a data está no formato correto (DD/MM/YYYY) e se é uma data válida.
+    try:
+        datetime.strptime(data, "%d/%m/%Y")
+        return True
+    except ValueError:
+        return False
+
+
+def validar_nome(nome):
+    return bool(nome.strip()) and len(nome) <= 50
+
+
+def validar_curso(curso):
+    return bool(curso.strip()) and len(curso) <= 50
+
+
+def cadastrar_aluno(cursor, conn):
+    print("Opção 1 selecionada\n")
+    
+    while True:
+        matricula = input("Digite a Matrícula do Aluno: ")
         
-        cursor.execute(''' 
-        INSERT INTO alunos (matricula, nome, curso, data_nascimento)
-        VALUES (?, ?, ?, ?)
-        ''', (matricula, nome, curso, data_nascimento))
-        
-        conn.commit()
-        print("\nAluno Cadastrado com Sucesso!\n")
-    else:
-        print("A matrícula já está cadastrada.")
+        try:
+            if not matricula.isdigit():
+                raise ValueError("\nA matrícula deve ser um número inteiro.\n")
+            
+            if validar_matricula(cursor, matricula):
+                print("A matrícula já está cadastrada.")
+                break
+            
+            nome = input("Digite o nome do Aluno: ")
+            if not validar_nome(nome):
+                raise ValueError("\nNome inválido. Deve ter até 50 caracteres e não pode ser vazio.\n")
+                
+            curso = input("Digite o curso do Aluno: ")
+            if not validar_curso(curso):
+                raise ValueError("\nCurso inválido. Deve ter até 50 caracteres e não pode ser vazio.\n")
+                
+            data_nascimento = input("Digite a data de nascimento do Aluno (DD/MM/YYYY): ")
+
+            # Valida a data de nascimento
+            while not validar_data(data_nascimento):
+                print("\nData de nascimento inválida. Use o formato DD/MM/YYYY.")
+                data_nascimento = input("Tente novamente. Digite a data de nascimento do Aluno (DD/MM/YYYY): ")
+
+            cursor.execute(''' 
+            INSERT INTO alunos (matricula, nome, curso, data_nascimento)
+            VALUES (?, ?, ?, ?)
+            ''', (matricula, nome, curso, data_nascimento))
+            
+            conn.commit()
+            print("\nAluno Cadastrado com Sucesso!\n")
+            break  
+            
+        except ValueError as e:
+            print(f"Erro: {e}") 
+        except sqlite3.IntegrityError:
+            print("Erro: A matrícula já está cadastrada.")
+        except Exception as e:
+            print(f"Erro ao cadastrar aluno: {e}")
 
     print("-------------------------------------------------------------")
+
 
 def consultar_aluno(cursor, conn):
     # Função para consultar os dados de um aluno.
@@ -69,9 +113,9 @@ def consultar_aluno(cursor, conn):
         else:
             print("Aluno não encontrado.")
     print("-------------------------------------------------------------")
+    
 
 def atualizar_aluno(cursor, conn):
-    # Função para atualizar os dados de um aluno existente.
     print("Opção 3 selecionada")
     matricula = input("Digite a matrícula do aluno a ser atualizada: ")
 
@@ -86,7 +130,12 @@ def atualizar_aluno(cursor, conn):
             novo_nome = input(f"Novo nome [{aluno[1]}]: ") or aluno[1]
             novo_curso = input(f"Novo curso [{aluno[2]}]: ") or aluno[2]
             nova_data_nascimento = input(f"Nova data de nascimento (DD/MM/YYYY) [{aluno[3]}]: ") or aluno[3]
-           
+
+            # Valida a nova data de nascimento
+            while nova_data_nascimento and not validar_data(nova_data_nascimento):
+                print("\nData de nascimento inválida. Use o formato DD/MM/YYYY.")
+                nova_data_nascimento = input(f"Tente novamente. Nova data de nascimento (DD/MM/YYYY) [{aluno[3]}]: ") or aluno[3]
+
             cursor.execute(''' 
             UPDATE alunos
             SET nome = ?, curso = ?, data_nascimento = ?
@@ -98,6 +147,7 @@ def atualizar_aluno(cursor, conn):
         else:
             print("\nAluno não encontrado.\n")
     print("-------------------------------------------------------------")
+
 
 def excluir_aluno(cursor, conn):
     # Função para excluir um aluno do banco de dados.
@@ -122,6 +172,7 @@ def excluir_aluno(cursor, conn):
         else:
             print("\nAluno não encontrado.\n")
     print("-------------------------------------------------------------") 
+    
 
 def listar_todos_alunos(cursor, conn):
     # Função para listar todos os alunos cadastrados.
@@ -139,13 +190,14 @@ def listar_todos_alunos(cursor, conn):
             print("-------------------------------------------------------------")
     else:
         print("Nenhum aluno cadastrado.\n")
+        
 
 def menu_nota(cursor, conn):
     # Menu para gerenciar notas dos alunos.
     while True:
         print("Opção 6 selecionada\n")
-        print("1. Adicionar/Atualizar notas")
-        print("2. Ver notas do aluno")
+        print("1. Adicionar/Atualizar notas do aluno(a)")
+        print("2. Ver notas do aluno(a)")
         print("3. Voltar ao menu principal")
 
         opcao = input("\nEscolha uma opção: ")
@@ -153,9 +205,17 @@ def menu_nota(cursor, conn):
         if opcao == '1':
             matricula = input("Digite a matrícula do aluno: ")
             if validar_matricula(cursor, matricula):
-                av1 = float(input("Digite a nova nota da Av1: "))
-                av2 = float(input("Digite a nova nota da Av2: "))
-
+                while True:
+                    try:
+                        av1 = float(input("Digite a nova nota da Av1 (0 a 10): "))
+                        av2 = float(input("Digite a nova nota da Av2 (0 a 10): "))
+                        if 0 <= av1 <= 10 and 0 <= av2 <= 10:
+                            break
+                        else:
+                            print("As notas devem estar entre 0 e 10.")
+                    except ValueError:
+                        print("Por favor, insira um valor numérico válido.")
+                
                 cursor.execute('''UPDATE alunos SET av1 = ?, av2 = ? WHERE matricula = ?''', (av1, av2, matricula))
                 conn.commit()
                 print("\nNotas atualizadas com sucesso!")
@@ -180,7 +240,7 @@ def menu_nota(cursor, conn):
                     print("Aluno não encontrado.\n")
 
         elif opcao == '3':
-            break  # Sai do loop e volta ao menu principal
+            break
 
         else:
             print("Opção inválida. Tente novamente.")
